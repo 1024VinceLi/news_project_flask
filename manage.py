@@ -1,8 +1,8 @@
-from flask import Flask
+from flask import Flask,session
 from flask_sqlalchemy import SQLAlchemy
 import redis
 from flask_wtf import CSRFProtect # 导入csrf防御模块
-
+from flask_session import Session
 app = Flask(__name__)
 
 
@@ -18,10 +18,19 @@ class Config(object):
     REDIS_HOST = "127.0.0.1"
     REDIS_PORT = 6379
 
-
-
-
-
+    # flask_session配置信息
+    SESSION_TYPE = "redis"  # 指定session存储到redis中
+    SESSION_USE_SIGNER = True  # 让cookie中的session_id被加密
+    SESSION_REDIS = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)  # 使用redis的实例
+    PERMANENT_SESSION_LIFETIME = 86400  # 有效期(单位为秒)
+    # 配置的是session的存储位置
+    """
+    flask 默认是将 session,进行加密,存储到了 cookie 中. 而 Django 默认是将 session 进行加密存
+    储到了数据库中
+    但是都没有存储到 Redis 中方便快速. 所以我们项目中将 session 存储到 redis 中
+    
+    """
+    SECRET_KEY = "J12B234B23JAS14r34BJK"  # 设置session在cookie中的id加密的秘钥
 
 
 
@@ -53,6 +62,7 @@ result=sr.set('name','itheima')
         result=sr.keys()
 """
 
+
 # 添加csrf配置信息
 CSRFProtect(app)
 """
@@ -64,6 +74,17 @@ post,put,patch,delete. 这些操作进行校验
 作.csrfProtect 只会对修改操作做校验.
 """
 
+
+# 配置Session
+Session(app)
+"""
+Session类中的init方法接收一个参数,就是app:
+    def __init__(self, app=None):
+        self.app = app
+        if app is not None:
+            self.init_app(app)
+如果没有app就自己初始化一个,所以这里我们给他传一个app         
+"""
 
 
 
