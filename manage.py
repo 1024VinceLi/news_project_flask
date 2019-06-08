@@ -1,9 +1,21 @@
 from flask import Flask,session
 from flask_sqlalchemy import SQLAlchemy
 import redis
-from flask_wtf import CSRFProtect # 导入csrf防御模块
+from flask_wtf import CSRFProtect  # 导入csrf防御模块
 from flask_session import Session
 app = Flask(__name__)
+from flask_script import Manager  # 导入命令启动模块
+from flask_migrate import  Migrate,MigrateCommand
+
+
+
+
+
+manager = Manager(app)  # 创建Manager的实例对象
+
+
+
+
 
 
 class Config(object):
@@ -86,7 +98,12 @@ Session类中的init方法接收一个参数,就是app:
 如果没有app就自己初始化一个,所以这里我们给他传一个app         
 """
 
-
+Migrate(app, db)  # 数据库迁移
+"""
+Migrate函数接收4个参数,其中有app和db都默认为None,但是后面会判断如果app和db为none的时候
+会调用里面的init方法初始化app和db,所有传入app和db
+"""
+manager.add_command('db', MigrateCommand)  # 将数据库迁移命令注册到命令行启动命令中
 
 
 @app.route('/')
@@ -95,4 +112,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    manager.run()
