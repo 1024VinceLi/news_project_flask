@@ -1,8 +1,8 @@
+import logging
 from flask import session
 from info import create_app, db
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
-
 
 
 app = create_app("develop")
@@ -20,7 +20,9 @@ manager.add_command('db', MigrateCommand)  # 将数据库迁移命令注册到�
 @app.route('/')
 def index():
     session["name"] = "laowang"  # 做session测试
+    logging.debug("测试debug")
     return "index"
+
 
 
 if __name__ == '__main__':

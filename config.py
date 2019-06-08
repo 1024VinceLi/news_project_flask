@@ -1,3 +1,4 @@
+import logging
 import redis
 
 
@@ -27,6 +28,11 @@ class Config(object):
     """
     SECRET_KEY = "J12B234B23JAS14r34BJK"  # 设置session在cookie中的id加密的秘钥
 
+    # 设置日志登记
+    LOG_EVEL = logging.DEBUG
+
+
+
 class DevelopConfig(Config):
     """开发环境下的配置"""
     DEBUG = True
@@ -34,6 +40,8 @@ class DevelopConfig(Config):
 class ProductConfig(Config):
     """生产环境配置"""
     DEBUG = False
+    LOG_EVEL = logging.WARNING  # 配置生产环境日志等级
+
 
 class TestingConfig(Config):
     """单元测试配置"""
