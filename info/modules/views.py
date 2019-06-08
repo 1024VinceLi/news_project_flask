@@ -1,5 +1,7 @@
 from info.modules import index_blu
 from info import redis_store
+from flask import render_template
+
 
 @index_blu.route('/')
 def index():
@@ -11,4 +13,4 @@ def index():
     redis_store.set("name", "laowang")
     # 向redis中保存一个键值
 
-    return "index"
+    return render_template("/index.html")
