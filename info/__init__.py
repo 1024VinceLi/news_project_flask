@@ -3,20 +3,20 @@ from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from config import Config
+from config import config
 
 app = Flask(__name__)
 
 
 
 # 从类中导入配置信息
-app.config.from_object(Config)
+app.config.from_object(config["develop"])
 
 # 获取mysql操作游标db
 db = SQLAlchemy(app)
 
 # 创建StrictRedis对象，与redis服务器建⽴连接
-redis_store = redis.StrictRedis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
+redis_store = redis.StrictRedis(host=config["develop"].REDIS_HOST, port=config["develop"].REDIS_PORT)
 """
 StrictRedis对象⽅法
 指定参数host、port与指定的服务器和端⼝连接，

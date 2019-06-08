@@ -26,3 +26,23 @@ class Config(object):
 
     """
     SECRET_KEY = "J12B234B23JAS14r34BJK"  # 设置session在cookie中的id加密的秘钥
+
+class DevelopConfig(Config):
+    """开发环境下的配置"""
+    DEBUG = True
+
+class ProductConfig(Config):
+    """生产环境配置"""
+    DEBUG = False
+
+class TestingConfig(Config):
+    """单元测试配置"""
+    DEBUG = True
+    TESTING = True
+
+
+config = {  # 以字典的形式对函授进行封装,方便使用
+    "develop":DevelopConfig,
+    "product":ProductConfig,
+    "testing":TestingConfig
+}
