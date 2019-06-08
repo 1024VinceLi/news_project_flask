@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import redis
-
+from flask_wtf import CSRFProtect # 导入csrf防御模块
 
 app = Flask(__name__)
 
@@ -52,6 +52,21 @@ result=sr.set('name','itheima')
     keys 输出响应结果，返回一个列表
         result=sr.keys()
 """
+
+# 添加csrf配置信息
+CSRFProtect(app)
+"""
+wtf 中的 csrf 验证就是由 csrfProtect 提供的.
+所以只需要实例化 CSRFProtect 就可以开启 csrf验证.
+补充: CSRFProtect 会对:
+post,put,patch,delete. 这些操作进行校验
+都是对服务器的数据有修改操作的. 而不是获取数据操
+作.csrfProtect 只会对修改操作做校验.
+"""
+
+
+
+
 
 @app.route('/')
 def index():
