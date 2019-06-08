@@ -1,10 +1,11 @@
-from info import app, db
+from flask import session
+from info import create_app, db
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 
 
 
-
+app = create_app("develop")
 
 Migrate(app, db)  # 数据库迁移
 """
@@ -18,6 +19,7 @@ manager.add_command('db', MigrateCommand)  # 将数据库迁移命令注册到�
 
 @app.route('/')
 def index():
+    session["name"] = "laowang"  # 做session测试
     return "index"
 
 
