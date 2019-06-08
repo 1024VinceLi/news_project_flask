@@ -21,7 +21,7 @@ def setup_log(config_name):
     # 设置日志的记录等级
     logging.basicConfig(level=config[config_name].LOG_EVEL)  # 调试debug级
     # 创建日志记录器，指明日志保存的路径、每个日志文件的最大大小、保存的日志文件个数上限
-    file_log_handler = RotatingFileHandler("logs/log", maxBytes=1024 * 1024 * 100, backupCount=10)
+    file_log_handler = RotatingFileHandler("logs/log", maxBytes=100, backupCount=10)
     # 创建日志记录的格式 日志等级 输入日志信息的文件名 行数 日志信息
     formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
     # 为刚创建的日志记录器设置日志记录格式
@@ -30,7 +30,10 @@ def setup_log(config_name):
     logging.getLogger().addHandler(file_log_handler)
 
 
-
+redis_store = None
+"""
+使用修改全局变量的形式,使局部变量在全局可用
+"""
 
 
 def create_app(config_name):
@@ -59,6 +62,7 @@ def create_app(config_name):
     db.init_app(app)
 
     # 创建StrictRedis对象，与redis服务器建⽴连接
+    global redis_store
     redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT)
     """
     StrictRedis对象⽅法
@@ -100,4 +104,10 @@ def create_app(config_name):
                 self.init_app(app)
     如果没有app就自己初始化一个,所以这里我们给他传一个app         
     """
+
+    # 注册蓝图
+    from info.modules.views import index_blu
+    app.register_blueprint(index_blu)
+
+
     return app

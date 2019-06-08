@@ -17,11 +17,7 @@ manager = Manager(app)  # 创建Manager的实例对象
 manager.add_command('db', MigrateCommand)  # 将数据库迁移命令注册到命令行启动命令中
 
 
-@app.route('/')
-def index():
-    session["name"] = "laowang"  # 做session测试
-    logging.debug("测试debug")
-    return "index"
+
 
 
 
