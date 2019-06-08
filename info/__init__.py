@@ -30,9 +30,12 @@ def setup_log(config_name):
     logging.getLogger().addHandler(file_log_handler)
 
 
-redis_store = None
+# redis_store = None  # type: # StrictRedis
+redis_store: redis.StrictRedis = None  # 使用这种形式也可以
 """
-使用修改全局变量的形式,使局部变量在全局可用
+1 使用修改全局变量的形式,使局部变量在全局可用
+2 注释声明变量的类型. 这样解释器就知道他是什么类型的对象,那就可以代码提示了
+ # type: 
 """
 
 
