@@ -125,6 +125,7 @@ def send_sms_code():
 
     # 将验证码保存在redis中(执行到这一步表示已经发送成功了)
     try:
+        # 短信验证码在redis中的格式为SMS_开头
         redis_store.set("SMS_" + mobile, sms_code_str, constants.SMS_CODE_REDIS_EXPIRES)
     except Exception as e:
         current_app.logger.error(e)
@@ -132,3 +133,94 @@ def send_sms_code():
 
     # 7 告知发送结果
     return jsonify(errno=RET.OK, errmsg="发送成功")
+
+
+
+@passport_blu.route("/register",methods=['POST'])
+def register():
+    """
+    注册逻辑
+    1 获取参数
+    2 校验参数
+    3 取到服务器保存的真实短信内容荣
+    4 校验用户输入的短信验证码内容和真实验证码内容是否是一致
+    5 如果一致,初始化User模型,
+     6 将 user模型添加到数据库
+     7 返回响应
+    :return: json errno错误码
+    
+    参数: mobile手机号  smscode短信验证码   password密码
+    """
+    # 1 获取参数
+    param_dict = request.json
+
+    # 提取手机号
+    mobile = param_dict.get("mobile")
+
+    # 提取短信验证码
+    smscode = param_dict.get("smscode")
+
+    # 提取密码
+    password = param_dict.get("password")
+
+
+    # 2 校验参数
+    if not all([mobile, smscode, password]):
+        return jsonify(erron=RET.PARAMERR, errmsg="参数不足")
+
+    # 校验手机号是否正确
+    if not re.match(r"1[345678]\d{9}",mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号格式不正确")
+
+    # 3 取到服务器保存的真实短信验证码内容
+    try:
+        real_sms_code = redis_store.get("SMS_"+mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询失败")
+
+    if not real_sms_code:
+        # 表示验证码已经过期了,取到了空
+        return jsonify(errno=RET.NODATA, errmsg="验证码已过期")
+
+    # 4 校验用户输入的短信验证码的内容和真实验证码的内容是否一致
+    if real_sms_code != smscode:
+        return jsonify(errno=RE.DATAERR, errmsg="验证码输入错误")
+
+    # 5 如果一致,初始化User模型,并赋值
+    user = User()
+    user.mobile = mobile
+    # 暂时没有昵称,用手机号代替
+    user.nick_name = mobile
+    # 记录最后一次登录的时间
+    user.last_login = datatime.now()
+
+    # TODO 对密码做处理
+
+
+    # 6 添加到数据库
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.eror(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg = "数据保存失败")
+
+    # 往往session中保存数据表示当前已经登录
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = nuser.nick_name
+
+    # 7 返回响应
+    return jsonify(errno=RET.OK, errmsg="注册成功")
+
+
+
+
+
+
+
+
+
+
