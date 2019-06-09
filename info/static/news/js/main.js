@@ -183,7 +183,7 @@ function sendSMSCode() {
     }
 
     // TODO 发送短信验证码
-    var parms = {
+    var params = {
         // 三个参数 手机号 验证码  验证码编号
         "mobile":mobile,
         "image_code":imageCode,
@@ -197,9 +197,8 @@ function sendSMSCode() {
         url:"/passport/sms_code",
         // 请求方式
         type:"post",
-        // 请求参数
-        data:json.stringify(params),
-
+        // 请求参数 JSON 要大写
+        data:JSON.stringify(params),
         //请求参数的数据类型
         contentType:"application/json",
 
@@ -209,7 +208,7 @@ function sendSMSCode() {
                 var num = 60 //倒计时60秒\
                 //创建计时器,设置倒计时时间
                 var t = setInterval(function () {
-                    if (unm == 1){
+                    if (num == 1){
                         //代表倒计时结束
                         //清除计时器
                         clearInterval(t)

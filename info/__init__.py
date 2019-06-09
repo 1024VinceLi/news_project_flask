@@ -68,7 +68,7 @@ def create_app(config_name):
 
     # 创建StrictRedis对象，与redis服务器建⽴连接
     global redis_store
-    redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT)
+    redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT, decode_responses=True)
     """
     StrictRedis对象⽅法
     指定参数host、port与指定的服务器和端⼝连接，

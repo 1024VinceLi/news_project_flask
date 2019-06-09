@@ -1,7 +1,9 @@
-from flask import request, abort, current_app, make_response
+from flask import request, abort, current_app, make_response, jsonify
 import re
 from info import redis_store, constants
+from info.libs.yuntongxun.sms import CCP
 from info.utils.captcha.captcha import captcha
+from info.utils.response_code import RET
 from . import passport_blu
 import random
 
@@ -62,6 +64,9 @@ def send_sms_code():
     7 告知发送结果
 
     """
+    # 测试
+    return jsonify(errno=RET.OK,errmsg="发送成功")
+
 
     # 1 获取参数: 手机号 图片验证码, 图片验证码编号
     params_dict = request.json  # 将传来的字符串字典类型转成json类型
@@ -122,8 +127,8 @@ def send_sms_code():
     try:
         redis_store.set("SMS_" + mobile, sms_code_str, constants.SMS_CODE_REDIS_EXPIRES)
     except Exception as e:
-    current_app.logger.error(e)
-    return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
 
     # 7 告知发送结果
     return jsonify(errno=RET.OK, errmsg="发送成功")
