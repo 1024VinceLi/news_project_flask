@@ -156,7 +156,7 @@ function generateImageCode() {
     imageCodeId = generateUUID() //UUID生成图片验证码的编号
 
     //合成url
-    var url="/image_code?imageCodeId="+imageCodeId
+    var url="/passport/image_code?imageCodeId="+imageCodeId
 
     // 给指定img标签设置src, 设置src后img标签会自动向这个url请求这个图片
     $(".get_pic_code").attr("src",url)
