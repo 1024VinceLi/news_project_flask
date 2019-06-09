@@ -183,7 +183,67 @@ function sendSMSCode() {
     }
 
     // TODO 发送短信验证码
+    var parms = {
+        // 三个参数 手机号 验证码  验证码编号
+        "mobile":mobile,
+        "image_code":imageCode,
+        "image_code_id": imageCodeId
+    }
+
+
+    // 发起注册请求
+    $.ajax({
+        //请求地址
+        url:"/passport/sms_code",
+        // 请求方式
+        type:"post",
+        // 请求参数
+        data:json.stringify(params),
+
+        //请求参数的数据类型
+        contentType:"application/json",
+
+        success:function (response) {
+            if(response.errno == "0"){
+                //代表发送成功
+                var num = 60 //倒计时60秒\
+                //创建计时器,设置倒计时时间
+                var t = setInterval(function () {
+                    if (unm == 1){
+                        //代表倒计时结束
+                        //清除计时器
+                        clearInterval(t)
+
+                        //设置显示内容,倒计时时间结束后再次显示电机获取验证码
+                        $(".get_code").html("点击获取验证码")
+
+                        //添加点击事件,因为上面点击过后就把电机事件移除了,
+                        // 所以在此处从新添加点击时间
+                        $(".get_code").attr("onclick", "sendSMSCode();")
+
+                    }else {
+                      num -= 1
+                        // 设置a标签显示的内容
+                        $(".get_code").html(num+"秒")
+                        //显示倒计时时间
+                    }
+                }, 1000)
+            }else{
+                //代表发送失败
+                alert(response.errmsg)
+                //第三方短信发送失败,在此处重新添加点击事件
+                $(".get_code").attr("onclick","sendSMSCode();")
+
+            }
+        }
+
+    })
+
 }
+
+
+
+
 
 // 调用该函数模拟点击左侧按钮
 function fnChangeMenu(n) {
