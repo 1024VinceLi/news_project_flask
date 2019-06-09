@@ -1,5 +1,3 @@
-import logging
-from flask import session
 from info import create_app, db,models
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager

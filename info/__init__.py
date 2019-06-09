@@ -1,11 +1,13 @@
+import logging
 from logging.handlers import RotatingFileHandler
+
 import redis
 from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
+
 from config import config
-import logging
 
 # 初始化数据库
 # 在flask中有很多扩展里面都可以先初始化扩展独享,然后再调用init_app方法去初始化
@@ -21,7 +23,7 @@ def setup_log(config_name):
     # 设置日志的记录等级
     logging.basicConfig(level=config[config_name].LOG_EVEL)  # 调试debug级
     # 创建日志记录器，指明日志保存的路径、每个日志文件的最大大小、保存的日志文件个数上限
-    file_log_handler = RotatingFileHandler("logs/log", maxBytes=100, backupCount=10)
+    file_log_handler = RotatingFileHandler("logs/log", maxBytes=1024, backupCount=10)
     # 创建日志记录的格式 日志等级 输入日志信息的文件名 行数 日志信息
     formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
     # 为刚创建的日志记录器设置日志记录格式
@@ -48,7 +50,7 @@ def create_app(config_name):
     :return: app实例对象
     """
 
-    setup_log(config_name)
+    # setup_log(config_name)
     """
     创建 app 的时候,初始化 log 配置即可.
     传入对应的环境,指定对应的日志等级,工厂模式
@@ -109,8 +111,12 @@ def create_app(config_name):
     """
 
     # 注册蓝图
-    from info.modules.views import index_blu
+    from info.modules.index import index_blu
     app.register_blueprint(index_blu)
+
+    # 注册passport蓝图
+    from info.modules.passport import passport_blu
+    app.register_blueprint(passport_blu)
 
 
     return app

@@ -1,6 +1,7 @@
-from info.modules import index_blu
-from info import redis_store
 from flask import render_template, current_app
+
+from info import redis_store
+from info.modules.index import index_blu
 
 
 @index_blu.route('/')
