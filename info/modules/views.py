@@ -19,7 +19,7 @@ def index():
 
 # 在打开网页的时候,浏览器会自动向根路径请求图标
 # send_static_file 是flask查找静态文件调用的方法
-@index.route("/favicon.ico")
+@index_blu.route("/favicon.ico")
 def favicon():
     return current_app.send_static_file("news/favicon.ico")
 # send_static_file: 发送静态文件. 找到项目的静态文件夹中的某个静态文件,并且返回
