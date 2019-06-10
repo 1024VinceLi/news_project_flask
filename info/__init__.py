@@ -89,7 +89,7 @@ def create_app(config_name):
     """
 
     # 添加csrf配置信息
-    CSRFProtect(app)
+    # CSRFProtect(app)
     """
     wtf 中的 csrf 验证就是由 csrfProtect 提供的.
     所以只需要实例化 CSRFProtect 就可以开启 csrf验证.

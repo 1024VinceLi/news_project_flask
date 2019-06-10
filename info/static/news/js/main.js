@@ -33,9 +33,20 @@ $(function(){
 
 
 	// 点击输入框，提示文字上移
-	$('.form_group').on('click focusin',function(){
-		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
-	})
+	// $('.form_group').on('click focusin',function(){
+	// 	$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
+	// })
+
+    // 拷贝过来的修改前端页面BUG的代码
+    $('.form_group').on('click',function(){
+        $(this).children('input').focus()
+    })
+    //
+
+    $('.form_group input').on('focusin',function(){
+        $(this).siblings('.input_tip').animate({'top':-5,'font-size':12},'fast')
+        $(this).parent().addClass('hotline');
+    })
 
 	// 输入框失去焦点，如果输入框为空，则提示文字下移
 	$('.form_group input').on('blur focusout',function(){
@@ -226,7 +237,7 @@ function sendSMSCode() {
         //请求地址
         url:"/passport/sms_code",
         // 请求方式
-        type:"post",
+        type:"POST",
         // 请求参数 JSON 要大写
         data:JSON.stringify(params),
         //请求参数的数据类型

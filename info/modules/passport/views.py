@@ -1,7 +1,10 @@
-from flask import request, abort, current_app, make_response, jsonify
+import datetime
+
+from flask import request, abort, current_app, make_response, jsonify, session
 import re
-from info import redis_store, constants
+from info import redis_store, constants, db
 from info.libs.yuntongxun.sms import CCP
+from info.models import User
 from info.utils.captcha.captcha import captcha
 from info.utils.response_code import RET
 from . import passport_blu
@@ -23,13 +26,14 @@ def get_image_code():
     # args: 取到url中 ? 后面的参数
     # 这个获取到的imageCodeId是前端js生成的图片验证码的编号
     image_code_id = request.args.get("imageCodeId")  # 取参数,如果不存在就为None
-    print(image_code_id)
     # 2 判断参数是否有值
     if not image_code_id:
         return abort(404)  # 如果没有值就返回404
 
     # 3 生成图片验证码
     name, text, image = captcha.generate_captcha()
+    print("图片验证码: %s" % text)
+
     """
     captcha源码中的generate_captcha函数返回值有三个,
     1 name
@@ -65,11 +69,13 @@ def send_sms_code():
 
     """
     # 测试
-    return jsonify(errno=RET.OK,errmsg="发送成功")
+    # return jsonify(errno=RET.OK,errmsg="发送成功")
 
 
     # 1 获取参数: 手机号 图片验证码, 图片验证码编号
     params_dict = request.json  # 将传来的字符串字典类型转成json类型
+
+    print(params_dict)
 
     # 提取手机号
     mobile = params_dict.get("mobile")
@@ -89,10 +95,12 @@ def send_sms_code():
     if not re.match(r"1[345678]\d{9}", mobile):
         return jsonify(errno=RET.PARAMERR, errmsg="手机号格式不正确")
 
-    # 3 先从redis中取出真实的验证码内容
+    # 3 先从redis中取出真实的验证码内容,此步骤为了检验验证码是否过期
     try:
         # 所有的数据库操作都要用try包起来
-        real_image_code = redis_store.get("ImageCodeId_" + image_code_id)
+        real_image_code = redis_store.get("ImageCodeId_" + image_code_id)  # 从数据库中取出来的是byte类型
+
+        print("redis中的图片验证码id为: %s " % real_image_code)
         # 变量real_image_code为redis中真实的图片验证码
     except Exception as e:
         current_app.logger.error(e)
@@ -103,7 +111,9 @@ def send_sms_code():
         return jsonify(errno=RET.NODATA, errmsg="图片验证码已过期")
 
     # 4 与用户的验证码内容进行对比,如果不一致,那么返回验证码输入错误
-    if real_image_code.upper() != image_code_id.upper():
+    print("图片验证码比较:  %s : %s" % (real_image_code.upper(), image_code.upper()))
+    if real_image_code.upper() != image_code.upper():
+
         """
         将验证码全都转为大写再比较
         无论用户输入的大写还是小写,都可以通过验证
@@ -114,14 +124,16 @@ def send_sms_code():
     # 随机数字,保证数字长度为6位,不够再前面补上0
     sms_code_str = "%06d" % random.randint(0, 999999)
     current_app.logger.debug("短信验证码的内容是: %s" % sms_code_str)
+    print("手机验证码: %s " % sms_code_str)
 
     # 6 发送短信验证码
     #  参数为 手机号   [短信内容, 过期时间] 短信模板编号
-    result = CCP().send_template_sms(mobile, [sms_code_str, constants.SMS_CODE_REDIS_EXPIRES], 1)
+    # result = CCP().send_template_sms(mobile, [sms_code_str, constants.SMS_CODE_REDIS_EXPIRES], 1)
     # 成功会默认返回0
-    if result != 0:
-        # result 不等于0 代表发送不成功
-        return jsonify(errno=RET.THRDERR, errmsg="发送失败")
+
+    # if result != 0:
+    #     # result 不等于0 代表发送不成功
+    #     return jsonify(errno=RET.THRDERR, errmsg="发送失败")
 
     # 将验证码保存在redis中(执行到这一步表示已经发送成功了)
     try:
@@ -184,8 +196,9 @@ def register():
         return jsonify(errno=RET.NODATA, errmsg="验证码已过期")
 
     # 4 校验用户输入的短信验证码的内容和真实验证码的内容是否一致
+    print("注册时redis中的手机验证码比较: %s : %s" % (real_sms_code, smscode))
     if real_sms_code != smscode:
-        return jsonify(errno=RE.DATAERR, errmsg="验证码输入错误")
+        return jsonify(errno=RET.DATAERR, errmsg="验证码输入错误")
 
     # 5 如果一致,初始化User模型,并赋值
     user = User()
@@ -193,7 +206,7 @@ def register():
     # 暂时没有昵称,用手机号代替
     user.nick_name = mobile
     # 记录最后一次登录的时间
-    user.last_login = datatime.now()
+    user.last_login = datetime.now()
 
     # TODO 对密码做处理
 
@@ -210,7 +223,7 @@ def register():
     # 往往session中保存数据表示当前已经登录
     session["user_id"] = user.id
     session["mobile"] = user.mobile
-    session["nick_name"] = nuser.nick_name
+    session["nick_name"] = user.nick_name
 
     # 7 返回响应
     return jsonify(errno=RET.OK, errmsg="注册成功")
