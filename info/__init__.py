@@ -6,7 +6,7 @@ from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-
+from flask.ext.wtf.csrf import generate_csrf
 from config import config
 
 # 初始化数据库
@@ -88,8 +88,12 @@ def create_app(config_name):
             result=sr.keys()
     """
 
+    #  在界面加载的时候 往 cookie中添加一个csrf_token 并且在表点钟添加一个隐藏的csrf_token
+    # 使用请求钩子实现
+
+
     # 添加csrf配置信息
-    # CSRFProtect(app)
+    CSRFProtect(app)
     """
     wtf 中的 csrf 验证就是由 csrfProtect 提供的.
     所以只需要实例化 CSRFProtect 就可以开启 csrf验证.
@@ -109,6 +113,20 @@ def create_app(config_name):
                 self.init_app(app)
     如果没有app就自己初始化一个,所以这里我们给他传一个app         
     """
+
+    @app.after_request
+    def after_request(response):
+        """
+        集成csrf_token
+        :param response: 
+        :return: 
+        """
+        # 生成随机的csrf值
+        csrf_token = generate_csrf()
+
+        # 设置一个cookie值
+        response.set_cookie("csrf_token",csrf_token)
+        return response
 
     # 注册蓝图
     from info.modules.index import index_blu

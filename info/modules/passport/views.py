@@ -282,17 +282,29 @@ def login():
     # 设置当前洪湖最后一次登录时间
     user.last_login = datetime.now()
 
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
+    # try:
+    #     db.session.commit()
+    # except Exception as e:
+    #     db.session.rollback()
+    #     current_app.logger.error(e)
 
     # 5 响应
     return jsonify(errno=RET.OK, errmsg="登录成功")
 
 
 
+@passport_blu.route('/logout')
+def logout():
+    """
+    退出登录
+    :return: 
+    """
+    # pop是一出session中的数据
+    session.pop('user_id',None)
+    session.pop("mobile",None)
+    session.pop("nice_name",None)
+
+    return jsonify(errno=RET.OK, errmsg="退出成功")
 
 
 

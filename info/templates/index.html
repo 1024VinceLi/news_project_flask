@@ -28,7 +28,12 @@
             <div class="user_login fr">
                 <img src="{% if data.user.avatar_url %} data.user_info.avatar_url {% else %}../../static/news/images/person01.png{% endif %}" class="lgin_pic">
                 <a href="#">{{ data.user.nick_name }}</a>
-                <a href="#">退出</a>
+                <a href="javascript:;" onclick="logout()">退出</a>
+                {#
+                给 a 超链接添加了一个点击事件。（为啥要添加一个 href=“javascript：；”因为默认超链
+                接点击是有跳转行为的，我们这里写一个 javascript：；相当于要执行 js 代码，但是 js 代码
+                为空，所以就什么都不做。 只响应我们的点击事件了。
+                #}
             </div>
         {% else %}
             <div class="user_btns fr">

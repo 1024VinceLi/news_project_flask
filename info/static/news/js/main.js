@@ -123,13 +123,17 @@ $(function(){
         // 发起登录请求
         var params = {
         "mobile": mobile,
-        "passport": passport
+        "passport": password
     }
 
     $.ajax({
         url: "/passport/login",
         type: "post",
         contentType: "application/json",
+        // 在header中添加csrf_token随机值
+        headers:{
+            "X-CSRFToken": getCookie("csrf_token")
+        },
         data: JSON.stringify(params),
         success: function (resp) {
             if (resp.errno == "0") {
@@ -305,7 +309,15 @@ function sendSMSCode() {
     })
 
 }
+function logout() {
+    $.get('/passport/logout',function (resp) {
+        if (resp.errno == 0){
+            location.reload()
+        }
 
+    })
+
+}
 
 
 

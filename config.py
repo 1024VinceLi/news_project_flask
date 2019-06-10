@@ -9,6 +9,7 @@ class Config(object):
     # 配置mysql信息
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news_infor"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True # 自动提交
 
     # 集成redis配置信息
     REDIS_HOST = "127.0.0.1"
