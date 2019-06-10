@@ -217,7 +217,7 @@ def register():
         db.session.add(user)
         db.session.commit()
     except Exception as e:
-        current_app.logger.eror(e)
+        current_app.logger.error(e)
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg = "数据保存失败")
 
@@ -230,8 +230,66 @@ def register():
     return jsonify(errno=RET.OK, errmsg="注册成功")
 
 
+@passport_blu.route('/login', methods=["POST"])
+def login():
+    """
+    登录
+    1 获取参数
+    2 校验参数
+    3 校验密码
+    4 保存用户状态
+    5 响应
+    :return: 
+    """
+    # 1 获取参数
+    params_dict = request.json
+
+    # 提取手机号
+    mobile = params_dict.get("mobile")
+
+    # 提取密码
+    passport = params_dict.get("passport")
+
+    # 2 校验参数
+    if not all([mobile, passport]):
+        return jsonify(erron=RET.PARAMERR, errmsg="参数不足")
+
+    # 校验手机号是否正确
+    if not re.match(r"1[345678]\d{9}", mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg="手机号格式不正确")
+
+    # 3 校验密码
+    try:
+       user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询错误")
+
+    # 判断用户是否存在
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
+
+    # 校验登录的密码和当前用户的密码是否一致
+    if not user.check_passowrd(passport):
+        return jsonify(errno=RET.PWDERR, errmsg="用户名和密码错误")
+
+    # 4 保存用户登录状态
+    session["userr_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
 
 
+    # 设置当前洪湖最后一次登录时间
+    user.last_login = datetime.now()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+
+    # 5 响应
+    return jsonify(errno=RET.OK, errmsg="登录成功")
 
 
 

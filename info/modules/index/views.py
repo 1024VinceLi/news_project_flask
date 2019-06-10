@@ -1,20 +1,34 @@
-from flask import render_template, current_app
+from flask import render_template, current_app, session
 
 from info import redis_store
+from info.models import User
 from info.modules.index import index_blu
 
 
 @index_blu.route('/')
 def index():
-    # session["name"] = "laowang"  # 做session测试
-    # logging.debug("测试debug")
-    # print(app)  # 测试current_app 代表当前项目的app
+    """
+    显示首页
+    1 如果用户已经登录,当前登录用户的数据传到模板中
+    :return: 
+    """
+    # 取到用户id
+    user_id = session.get("user_id",None)
+    user = None
+    if user_id:
+
+       try:
+           user = User.query.get(user_id)
+       except Exception as e:
+           current_app.logger.error(e)
 
 
-    redis_store.set("name", "laowang")
-    # 向redis中保存一个键值
+    data = {
+       "user": user.to_dict() if user else None
+    }
 
-    return render_template("index.html")
+
+    return render_template("index.html",data=data)
 
 
 
