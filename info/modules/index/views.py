@@ -1,9 +1,6 @@
 from flask import render_template, current_app, session
-
-from info import redis_store
-from info.models import User
 from info.modules.index import index_blu
-
+from info.models import User
 
 @index_blu.route('/')
 def index():
@@ -13,19 +10,22 @@ def index():
     :return: 
     """
     # 取到用户id
-    user_id = session.get("user_id",None)
+    user_id = session.get("user_id")
+    print("user_id: %s" % user_id)
     user = None
     if user_id:
+        # 尝试查询用户模型
+        try:
 
-       try:
-           user = User.query.get(user_id)
-       except Exception as e:
+            user = User.query.get(user_id)
+        except Exception as e:
            current_app.logger.error(e)
 
-
+    print("user: %s" % user)
     data = {
        "user": user.to_dict() if user else None
     }
+    print("data: %s" % data)
 
 
     return render_template("index.html",data=data)

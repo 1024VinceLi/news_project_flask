@@ -6,7 +6,7 @@ from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flask.ext.wtf.csrf import generate_csrf
+from flask_wtf.csrf import generate_csrf
 from config import config
 
 # 初始化数据库
@@ -32,8 +32,8 @@ def setup_log(config_name):
     logging.getLogger().addHandler(file_log_handler)
 
 
-# redis_store = None  # type: # StrictRedis
-redis_store: redis.StrictRedis = None  # 使用这种形式也可以
+redis_store = None  # type: StrictRedis
+# redis_store: redis.StrictRedis = None  # 使用这种形式也可以
 """
 1 使用修改全局变量的形式,使局部变量在全局可用
 2 注释声明变量的类型. 这样解释器就知道他是什么类型的对象,那就可以代码提示了
@@ -90,7 +90,17 @@ def create_app(config_name):
 
     #  在界面加载的时候 往 cookie中添加一个csrf_token 并且在表点钟添加一个隐藏的csrf_token
     # 使用请求钩子实现
+    @app.after_request
+    def after_request(response):
+        """
+        集成csrf_token
+        """
+        # 生成随机的csrf值
+        csrf_token = generate_csrf()
 
+        # 设置一个cookie值
+        response.set_cookie("csrf_token", csrf_token)
+        return response
 
     # 添加csrf配置信息
     CSRFProtect(app)
@@ -114,20 +124,6 @@ def create_app(config_name):
     如果没有app就自己初始化一个,所以这里我们给他传一个app         
     """
 
-    @app.after_request
-    def after_request(response):
-        """
-        集成csrf_token
-        :param response: 
-        :return: 
-        """
-        # 生成随机的csrf值
-        csrf_token = generate_csrf()
-
-        # 设置一个cookie值
-        response.set_cookie("csrf_token",csrf_token)
-        return response
-
     # 注册蓝图
     from info.modules.index import index_blu
     app.register_blueprint(index_blu)
@@ -135,6 +131,7 @@ def create_app(config_name):
     # 注册passport蓝图
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
+
 
 
     return app

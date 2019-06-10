@@ -196,6 +196,9 @@ $(function(){
         type:"post",
         // 请求参数 JSON 要大写
         data:JSON.stringify(params),
+        headers:{
+            "X-CSRFToken":getCookie("csrf_token")
+        },
         //请求参数的数据类型
         contentType:"application/json",
 
@@ -252,30 +255,33 @@ function sendSMSCode() {
         return;
     }
 
-    // TODO 发送短信验证码
+    // 发送短信验证码
     var params = {
         // 三个参数 手机号 验证码  验证码编号
         "mobile":mobile,
         "image_code":imageCode,
         "image_code_id": imageCodeId
-    }
-
+    };
 
     // 发起注册请求
     $.ajax({
         //请求地址
         url:"/passport/sms_code",
         // 请求方式
-        type:"POST",
+        type:"post",
         // 请求参数 JSON 要大写
         data:JSON.stringify(params),
+        headers:{
+            "X-CSRFToken":getCookie("csrf_token")
+        },
         //请求参数的数据类型
         contentType:"application/json",
 
         success:function (response) {
             if(response.errno == "0"){
                 //代表发送成功
-                var num = 60 //倒计时60秒\
+                var num = 60
+                //倒计时60秒\
                 //创建计时器,设置倒计时时间
                 var t = setInterval(function () {
                     if (num == 1){
@@ -284,14 +290,14 @@ function sendSMSCode() {
                         clearInterval(t)
 
                         //设置显示内容,倒计时时间结束后再次显示电机获取验证码
-                        $(".get_code").html("点击获取验证码")
+                        $(".get_code").html("点击获取验证码");
 
                         //添加点击事件,因为上面点击过后就把电机事件移除了,
                         // 所以在此处从新添加点击时间
-                        $(".get_code").attr("onclick", "sendSMSCode();")
+                        $(".get_code").attr("onclick", "sendSMSCode();");
 
                     }else {
-                      num -= 1
+                        num -= 1
                         // 设置a标签显示的内容
                         $(".get_code").html(num+"秒")
                         //显示倒计时时间
@@ -301,7 +307,7 @@ function sendSMSCode() {
                 //代表发送失败
                 alert(response.errmsg)
                 //第三方短信发送失败,在此处重新添加点击事件
-                $(".get_code").attr("onclick","sendSMSCode();")
+                $(".get_code").attr("onclick","sendSMSCode();");
 
             }
         }
@@ -311,9 +317,9 @@ function sendSMSCode() {
 }
 function logout() {
     $.get('/passport/logout',function (resp) {
-        if (resp.errno == 0){
+
             location.reload()
-        }
+
 
     })
 

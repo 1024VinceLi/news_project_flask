@@ -274,21 +274,22 @@ def login():
         return jsonify(errno=RET.PWDERR, errmsg="用户名和密码错误")
 
     # 4 保存用户登录状态
-    session["userr_id"] = user.id
+    session["user_id"] = user.id
     session["mobile"] = user.mobile
     session["nick_name"] = user.nick_name
 
 
-    # 设置当前洪湖最后一次登录时间
+    # 设置当前最后一次登录时间
     user.last_login = datetime.now()
 
-    # try:
-    #     db.session.commit()
-    # except Exception as e:
-    #     db.session.rollback()
-    #     current_app.logger.error(e)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
 
     # 5 响应
+    print("用户%s 登录成功" % mobile)
     return jsonify(errno=RET.OK, errmsg="登录成功")
 
 
