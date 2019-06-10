@@ -175,6 +175,8 @@ $(function(){
         success:function (response) {
             if(response.errno == "0"){
                 //代表注册成功
+                location.reload()
+                //注册成功就刷新界面
             }else{
                 //代表注册失败
                 alert(response.errmsg)

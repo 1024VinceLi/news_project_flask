@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from flask import request, abort, current_app, make_response, jsonify, session
 import re
@@ -196,8 +196,9 @@ def register():
         return jsonify(errno=RET.NODATA, errmsg="验证码已过期")
 
     # 4 校验用户输入的短信验证码的内容和真实验证码的内容是否一致
-    print("注册时redis中的手机验证码比较: %s : %s" % (real_sms_code, smscode))
-    if real_sms_code != smscode:
+
+    if int(real_sms_code) != int(smscode):
+        print("注册时redis中的手机验证码比较:[ %s : %s] :[ %s : %s]" % (type(real_sms_code), real_sms_code, type(smscode), smscode))
         return jsonify(errno=RET.DATAERR, errmsg="手机验证码输入错误")
 
     # 5 如果一致,初始化User模型,并赋值
