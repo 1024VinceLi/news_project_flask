@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
-
+from info.utils.commom import to_index_class
 import redis
 from flask import Flask
 from flask_session import Session
@@ -123,6 +123,10 @@ def create_app(config_name):
                 self.init_app(app)
     如果没有app就自己初始化一个,所以这里我们给他传一个app         
     """
+
+    # 添加自定义过滤器函数
+    app.add_template_filter(to_index_class,"index_class")
+
 
     # 注册蓝图
     from info.modules.index import index_blu

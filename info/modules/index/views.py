@@ -1,6 +1,7 @@
 from flask import render_template, current_app, session
 from info.modules.index import index_blu
-from info.models import User
+from info.models import User, News
+
 
 @index_blu.route('/')
 def index():
@@ -21,12 +22,29 @@ def index():
         except Exception as e:
            current_app.logger.error(e)
 
-    print("user: %s" % user)
-    data = {
-       "user": user.to_dict() if user else None
-    }
-    print("data: %s" % data)
+    # print("user: %s" % user)
 
+    # print("data: %s" % data)
+
+
+    # 右侧新闻排列展示
+    news_list = []
+    try:
+        news_list = News.query.order_by(News.clicks.desc()).limit(9)
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 定义一个空的字典列表,里面装的就是字典
+    news_dict_li = [news.to_basic_dict() for news in news_list]
+    # 遍历对象列表,将对象的字典添加到字典列表中
+    # for news in news_list:
+    #     news_dict_li.append(news.to_basic_dict())
+
+    data = {
+        "user": user.to_dict() if user else None,
+        "news_dict_li": news_dict_li
+
+    }
 
     return render_template("index.html",data=data)
 
