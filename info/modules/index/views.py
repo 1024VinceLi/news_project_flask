@@ -2,7 +2,7 @@ from flask import render_template, current_app, session, request, jsonify
 
 from info import constants
 from info.modules.index import index_blu
-from info.models import User, News
+from info.models import User, News, Category
 from info.utils.response_code import RET
 
 
@@ -39,13 +39,19 @@ def index():
 
     # 定义一个空的字典列表,里面装的就是字典
     news_dict_li = [news.to_basic_dict() for news in news_list]
-    # 遍历对象列表,将对象的字典添加到字典列表中
-    # for news in news_list:
-    #     news_dict_li.append(news.to_basic_dict())
+
+
+    # 查询数据分类
+    categories = Category.query.all()
+
+    category_li = [category.to_dict() for category in categories]
+
+
 
     data = {
         "user": user.to_dict() if user else None,
-        "news_dict_li": news_dict_li
+        "news_dict_li": news_dict_li,
+        "category_li": category_li
 
     }
 
