@@ -44,6 +44,17 @@ $(function () {
 
         if ((canScrollHeight - nowScroll) < 100) {
             // TODO 判断页数，去更新新闻数据
+            console.log("滚动到底部了")
+            if(! data_querying){
+                data_querying=true
+
+                //如果当前页数据小于总页数,那么才去加载数据
+                if(cur_page < total_page){
+                    cur_page += 1
+                    //去加载数据
+                    updateNewsData()
+                }
+            }
         }
     })
 })
