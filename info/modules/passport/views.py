@@ -198,7 +198,7 @@ def register():
     # 4 校验用户输入的短信验证码的内容和真实验证码的内容是否一致
     print("注册时redis中的手机验证码比较: %s : %s" % (real_sms_code, smscode))
     if real_sms_code != smscode:
-        return jsonify(errno=RET.DATAERR, errmsg="验证码输入错误")
+        return jsonify(errno=RET.DATAERR, errmsg="手机验证码输入错误")
 
     # 5 如果一致,初始化User模型,并赋值
     user = User()
@@ -209,8 +209,8 @@ def register():
     user.last_login = datetime.now()
 
     # TODO 对密码做处理
-
-
+    # 设置password的时候对密码进行加密
+    user.password = password
     # 6 添加到数据库
     try:
         db.session.add(user)
