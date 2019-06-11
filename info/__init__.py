@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-from info.utils.commom import to_index_class
+
 import redis
 from flask import Flask
 from flask_session import Session
@@ -127,6 +127,7 @@ def create_app(config_name):
     """
 
     # 添加自定义过滤器函数
+    from info.utils.commom import to_index_class
     app.add_template_filter(to_index_class,"index_class")
 
 
