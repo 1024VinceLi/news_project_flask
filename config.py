@@ -7,7 +7,7 @@ class Config(object):
     DEBUG = True  # 开启debug
 
     # 配置mysql信息
-    SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news_inform"
+    SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news_infor"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True # 自动提交
 
