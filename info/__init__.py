@@ -1,5 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
+
+
 from info.utils.commom import to_index_class
 import redis
 from flask import Flask
@@ -136,6 +138,9 @@ def create_app(config_name):
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
 
+    # 注册news蓝图
+    from info.modules.news import news_blu
+    app.register_blueprint(news_blu)
 
 
     return app

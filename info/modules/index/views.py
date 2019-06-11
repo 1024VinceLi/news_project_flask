@@ -85,13 +85,13 @@ def news_list():
         current_app.logger.error(e)
         return jsonify(RET.PARAMERR, errmsg="参数")
 
-    filters = []
+    filters = [] # 用于存放查询条件
     if cid != 1: # 查询的不是最新的数据
         # 需要添加套件
         filters.append(News.category_id == cid)
 
     # 3 查询数据
-    try:
+    try:               # *一个列表,解包,可以吧一个空的[]变成空
        paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page, per_page, False)
     except Exception as e:
         current_app.logger.error(e)
@@ -109,9 +109,9 @@ def news_list():
         news_dict_li.append(news.to_basic_dict())
 
     data = {
-        "total_page": total_page,
-        "current_page":current_page,
-        "news_dict_li":news_dict_li
+        "total_page": total_page, # 总页数
+        "current_page":current_page, # 当前页数
+        "news_dict_li":news_dict_li  # 新闻数据列表
     }
     return jsonify(errno = RET.OK, errmsg="OK" , data=data)
 
