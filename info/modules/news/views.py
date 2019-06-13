@@ -1,27 +1,29 @@
-from flask import render_template, session, current_app, g, abort, jsonify, request
+from flask import request, jsonify, current_app, abort, render_template
 
-from info import constants, db
-from info.models import User, News, Comment, CommentLike
+from info import db, constants
+from info.models import Comment, CommentLike, News
+from info.modules import news
 from info.modules.news import news_blu
 from info.utils.common import user_login
 from info.utils.response_code import RET
 
 
-@news_blu.route("/comment_like", methods=["POST"])
+@news_blu.route("/news_comment", methods=["POST"])
 @user_login
-def set_comment_like():
+def news_comment():
     """
-    点赞和取消点赞的逻辑
-    1、接收参数 comment_id action
+    新闻评论功能
+    1、接收参数 用户  新闻  评论内容  parant_id
     2、校验参数
-    3、CommentLike()往点赞的表中添加或者删除一条数据
-    4、返回响应
+    3、业务逻辑  往数据库中添加一条评论
+    4、返回响应 返回响应的评论
+
     :return:
     """
     user = g.user
-
     if not user:
         return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+
 
     comment_id = request.json.get("comment_id")
     action = request.json.get("action")
@@ -31,6 +33,22 @@ def set_comment_like():
 
     if action not in ["add", "remove"]:
         return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+
+    news_id = request.json.get("news_id")
+    comment_str = request.json.get("comment")
+    parent_id = request.json.get("parent_id")
+
+    if not all([news_id, comment_str]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    try:
+        news_id = int(news_id)
+        if parent_id:
+            parent_id = int(parent_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数类型错误")
 
     try:
         comment_id = int(comment_id)
@@ -61,15 +79,31 @@ def set_comment_like():
         # 如果这条点赞存在，我才能删除点赞
         if comment_like_obj:
             db.session.delete(comment_like_obj)
-            comment_obj.like_count -= 1
+
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg="该条新闻不存在")
+
+    # 添加新闻评论，往评论表中添加数据
+    comment = Comment()
+    comment.news_id = news_id
+    comment.user_id = user.id
+    comment.content = comment_str
+    if parent_id:
+        comment.parent_id = parent_id
+
     try:
+        db.session.add(comment)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="数据库保存失败")
 
-    return jsonify(errno=RET.OK, errmsg="OK")
+
+    # 查询出该条新闻下的评论条数
+    comment_count = Comment.query.filter(Comment.news_id == news_id).count()
+
+    return jsonify(errno=RET.OK, errmsg="ok", data=comment.to_dict(), comment_count=comment_count)
 
 
 @news_blu.route("/news_comment", methods=["POST"])
@@ -253,10 +287,9 @@ def detail(news_id):
         comment_dict["is_like"] = False
         # 如果comment_dict["is_like"] = True代表已经点赞
         # 什么时候我们认为该条评论已经被点赞了？？？
-        # 如果该用户存在，并且去通过该用户和该条评论查询点赞，如果有值 True
-        if user and CommentLike.query.filter(CommentLike.comment_id == comment.id, CommentLike.user_id == user.id).first():
-            comment_dict["is_like"] = True
-        comments_dict_li.append(comment_dict)
+
+
+    comments_dict_li = [comment.to_dict() for comment in comments]
     data = {
         "user_info": user.to_dict() if user else None,
         "clicks_news_li": clicks_news_li,
@@ -264,4 +297,5 @@ def detail(news_id):
         "is_collected": is_collected,
         "comments_dict_li": comments_dict_li
     }
+
     return render_template("news/detail.html", data=data)

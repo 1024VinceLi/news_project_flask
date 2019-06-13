@@ -6,8 +6,14 @@ from redis import StrictRedis
 class Config(object):
     SECRET_KEY = "1234567890"
 
+
+
+
+
+    # 配置mysql信息
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news_inform"
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True # 自动提交
 
     # 给配置类里面自定义了两个类属性
     REDIS_HOST = "127.0.0.1"
