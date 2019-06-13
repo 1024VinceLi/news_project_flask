@@ -1,57 +1,54 @@
 import logging
-import redis
+
+from redis import StrictRedis
 
 
 class Config(object):
-    """配置信息类"""
-    DEBUG = True  # 开启debug
+    SECRET_KEY = "1234567890"
 
-    # 配置mysql信息
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/news_inform"
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True # 自动提交
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
-    # 集成redis配置信息
+    # 给配置类里面自定义了两个类属性
     REDIS_HOST = "127.0.0.1"
     REDIS_PORT = 6379
 
-    # flask_session配置信息
-    SESSION_TYPE = "redis"  # 指定session存储到redis中
-    SESSION_USE_SIGNER = True  # 让cookie中的session_id被加密
-    SESSION_REDIS = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT)  # 使用redis的实例
-    PERMANENT_SESSION_LIFETIME = 86400  # 有效期(单位为秒)
-    # 配置的是session的存储位置
-    """
-    flask 默认是将 session,进行加密,存储到了 cookie 中. 而 Django 默认是将 session 进行加密存
-    储到了数据库中
-    但是都没有存储到 Redis 中方便快速. 所以我们项目中将 session 存储到 redis 中
+    # 指定session的储存方式
+    SESSION_TYPE = "redis"
+    # 指定储存session的储存对象
+    SESSION_REDIS = StrictRedis(host=REDIS_HOST, port=REDIS_PORT)
+    # 设置session签名  加密
+    SESSION_USE_SIGNER = True
+    # 设置session永久保存
+    SESSION_PERMANENT = False
+    # 设置session保存的时间
+    PERMANENT_SESSION_LIFETIME = 86400 * 2
 
-    """
-    SECRET_KEY = "J12B234B23JAS14r34BJK"  # 设置session在cookie中的id加密的秘钥
-
-    # 设置日志登记
-    LOG_EVEL = logging.DEBUG
+    # 设置数据库的默认提交
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
 
+# 我们往往在工作中，不仅仅有一个配置文件。生产环境有生产环境的配置，开发环境有开发环境的配置，测试环境有测试环境的
+# 不管是开发环境还是测试环境总有一些配置是相同。所以说可以吧config作为基类
+# 面向对象的继承
 
 class DevelopConfig(Config):
-    """开发环境下的配置"""
     DEBUG = True
+    LOG_LEVEL = logging.DEBUG
+
 
 class ProductConfig(Config):
-    """生产环境配置"""
     DEBUG = False
-    LOG_EVEL = logging.WARNING  # 配置生产环境日志等级
+    LOG_LEVEL = logging.ERROR
 
 
 class TestingConfig(Config):
-    """单元测试配置"""
     DEBUG = True
-    TESTING = True
 
 
-config = {  # 以字典的形式对函授进行封装,方便使用
-    "develop":DevelopConfig,
-    "product":ProductConfig,
-    "testing":TestingConfig
+# 使用字典去封装
+config = {
+    "develop": DevelopConfig,
+    "product": ProductConfig,
+    "testing": TestingConfig
 }

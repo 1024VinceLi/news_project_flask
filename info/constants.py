@@ -1,8 +1,3 @@
-"""
-常量保存文件
-
-"""
-
 # 图片验证码Redis有效期， 单位：秒
 IMAGE_CODE_REDIS_EXPIRES = 300
 
@@ -25,7 +20,7 @@ USER_COLLECTION_MAX_NEWS = 10
 OTHER_NEWS_PAGE_MAX_COUNT = 10
 
 # 点击排行展示的最多新闻数据
-CLICK_RANK_MAX_NEWS = 6
+CLICK_RANK_MAX_NEWS = 10
 
 # 管理员页面用户每页多最数据条数
 ADMIN_USER_PAGE_MAX_COUNT = 10

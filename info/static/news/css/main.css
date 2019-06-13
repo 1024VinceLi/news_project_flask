@@ -68,7 +68,7 @@ body{
     height:30px;
     overflow: hidden;
     margin-top:15px;
-    display:block;
+    /*display:block;    */
 }
 
 .user_login img{
@@ -655,13 +655,13 @@ body{
 
 
 .collected{
-    display:inline-block;
+    /*display:inline-block;*/
     width:100px;
     height:36px;
     color:#666;
     border-radius:4px;
     font-size:14px;
-    margin:0px 5px;
+    /*margin:0px 5px;*/
     background:url(../images/collect_icons.png) 15px -73px no-repeat #e6e6e6;
     position:relative;
     overflow:hidden;

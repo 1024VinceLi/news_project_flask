@@ -1,135 +1,113 @@
-from flask import render_template, current_app, session, request, jsonify
+from flask import render_template, redirect, current_app, send_file, session, request, jsonify, g
 
 from info import constants
-from info.modules.index import index_blu
 from info.models import User, News, Category
-from info.utils.commom import user_login_data
+from info.modules.index import index_blu
+from info.utils.common import user_login
 from info.utils.response_code import RET
 
 
-@index_blu.route('/')
-@user_login_data
-def index():
+@index_blu.route("/news_list")
+def get_news_list():
     """
-    显示首页
-    1 如果用户已经登录,当前登录用户的数据传到模板中
-    :return: 
-    """
-    # 取到用户id
-    user_id = session.get("user_id")
-    print("user_id: %s" % user_id)
-    user = None
-    if user_id:
-        # 尝试查询用户模型
-        try:
-
-            user = User.query.get(user_id)
-        except Exception as e:
-           current_app.logger.error(e)
-
-    # print("user: %s" % user)
-
-    # print("data: %s" % data)
-
-
-    # 右侧新闻排列展示
-    news_list = []
-    try:
-        news_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
-    except Exception as e:
-        current_app.logger.error(e)
-
-    # 定义一个空的字典列表,里面装的就是字典
-    news_dict_li = [news.to_basic_dict() for news in news_list]
-
-
-    # 查询数据分类
-    categories = Category.query.all()
-
-    category_li = [category.to_dict() for category in categories]
-
-
-
-    data = {
-        "user": user.to_dict() if user else None,
-        "news_dict_li": news_dict_li,
-        "category_li": category_li
-
-    }
-
-    return render_template("index.html",data=data)
-
-
-@index_blu.route('/news_list')
-def news_list():
-    """
-    获取首页新闻数据
+    1、接收参数 cid page per_page
+    2、校验参数合法性
+    3、查询出的新闻（要关系分类）（创建时间的排序）
+    4、返回响应，返回新闻数据
     :return:
     """
+    # 1、接收参数 cid page per_page
+    cid = request.args.get("cid")
+    page = request.args.get("page", 1)
+    per_page = request.args.get("per_page", 10)
 
-    # 获取参数
-
-    # 新闻分类的id
-    cid = request.args.get("cid","1")
-
-    # 获取页数,不传默认为获取第一页
-    page = request.args.get("page",'1')
-
-    # 每页多条数据
-    per_page = request.args.get("per_page",'10')
-
-    # 校验参数
+    # 2、校验参数合法性
     try:
-        page = int(page)
         cid = int(cid)
+        page = int(page)
         per_page = int(per_page)
+
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(RET.PARAMERR, errmsg="参数")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
-    filters = [] # 用于存放查询条件
-    if cid != 1: # 查询的不是最新的数据
-        # 需要添加套件
+    # 3、查询出的新闻（要关系分类）（创建时间的排序）
+    filters = []
+    if cid != 1:
         filters.append(News.category_id == cid)
+    # 怎么把空列表变成空呢？？？ [News.category_id == cid, News.create_time == "asdfasf"]
+    try:
+        paginate = News.query.filter(*filters).order_by(News.create_time.desc()). \
+            paginate(page, per_page, False)
 
-    # 3 查询数据
-    try:               # *一个列表,解包,可以吧一个空的[]变成空
-       paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page, per_page, False)
     except Exception as e:
         current_app.logger.error(e)
-        return  jsonify(errno=RET.DBERR, errmsg="数据查询错误")
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询错误")
 
-    # 取到当前页面的数据
-    news_model_list = paginate.items # 模型对象列表
-    total_page = paginate.pages
+    news_list = paginate.items  # [obj, obj, obj]
     current_page = paginate.page
+    total_page = paginate.pages
 
-
-    # 将模型对象列表转成字典列表
     news_dict_li = []
-    for news in news_model_list:
+    for news in news_list:
         news_dict_li.append(news.to_basic_dict())
 
     data = {
-        "total_page": total_page, # 总页数
-        "current_page":current_page, # 当前页数
-        "news_dict_li":news_dict_li  # 新闻数据列表
+        "news_dict_li": news_dict_li,
+        "current_page": current_page,
+        "total_page": total_page
     }
-    return jsonify(errno = RET.OK, errmsg="OK" , data=data)
+
+    return jsonify(errno=RET.OK, errmsg="OK", data=data)
 
 
+@index_blu.route("/")
+@user_login
+def index():
+    # 需求：首页右上角实现，
+    # 当我们进入到首页。我们需要判断用户是否登录，如果登录，将用户信息查出来，渲染给index.html
+    user = g.user
+    # 1、显示新闻排行列表
+    clicks_news = []
+    try:
+        clicks_news = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS).all()  # [obj, obj, obj]
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # [obj, obj, obj] --> [{}, {}, {}, {}]
+    clicks_news_li = []
+
+    for news_obj in clicks_news:
+        clicks_news_dict = news_obj.to_basic_dict()
+        clicks_news_li.append(clicks_news_dict)
+
+    # 2、显示新闻分类
+    categorys = []
+    try:
+        categorys = Category.query.all()  # [obj, obj]
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # categorys_li = []  # [{}, {}, {}]
+    # for category in categorys:
+    #     categorys_dict = category.to_dict()
+    #     categorys_li.append(categorys_dict)
+    # 使用列表表达式返回[{}, {}, {}]数据
+    categorys_li = [category.to_dict() for category in categorys]
+
+    data = {
+        "user_info": user.to_dict() if user else None,
+        "clicks_news_li": clicks_news_li,
+        "categorys": categorys_li
+    }
+    # data.user_info.avatar_url
+
+    return render_template("news/index.html", data=data)
 
 
-
-
-
-
-
-
-
-# 在打开网页的时候,浏览器会自动向根路径请求图标
-# send_static_file 是flask查找静态文件调用的方法
 @index_blu.route("/favicon.ico")
 def favicon():
+    # redirect("/static/news/favicon.ico")
+    # 返回图片
     return current_app.send_static_file("news/favicon.ico")
-# send_static_file: 发送静态文件. 找到项目的静态文件夹中的某个静态文件,并且返回
+    # return send_file("/static/news/favicon.ico")

@@ -1,16 +1,15 @@
 # -*- coding:utf-8 -*-
 
-# from .CCPRestSDK import REST
 from info.libs.yuntongxun.CCPRestSDK import REST
 
 # 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID
-_accountSid = '8aaf0708568d4143015697b0f4960888'
+_accountSid = '8aaf07086010a0eb01602ec373bb0c35'
 
 # 说明：主账号Token，登陆云通讯网站后，可在控制台-应用中看到开发者主账号AUTH TOKEN
-_accountToken = '57c6c3ef3cef47e680519a734f6812f8'
+_accountToken = 'aa075805e30e43d18d2fcfa4816a76fc'
 
 # 请使用管理控制台首页的APPID或自己创建应用的APPID
-_appId = '8aaf0708568d4143015697b0f56e088f'
+_appId = '8a216da86010e69001602ee1defa0cbc'
 
 # 说明：请求地址，生产环境配置成app.cloopen.com
 _serverIP = 'sandboxapp.cloopen.com'
@@ -59,11 +58,10 @@ class CCP(object):
         """发送模板短信"""
         # @param to 手机号码
         # @param datas 内容数据 格式为数组 例如：{'12','34'}，如不需替换请填 ''
-        # @param temp_id 模板Id
+        # @param temp_id 模板Id  1
         result = self.rest.sendTemplateSMS(to, datas, temp_id)
+        print(result)
         # 如果云通讯发送短信成功，返回的字典数据result中statuCode字段的值为"000000"
-        print(result)  # 打印返回的字典数据
-
         if result.get("statusCode") == "000000":
             # 返回0 表示发送短信成功
             return 0
@@ -74,7 +72,5 @@ class CCP(object):
 
 if __name__ == '__main__':
     ccp = CCP()
-
     # 注意： 测试的短信模板编号为1
-    ccp.send_template_sms('15981981193', ['1234', 5], 1)
-    # 参数: 手机号,[‘短信验证码’,过期时间 5 分钟],短信验证码模板编码
+    ccp.send_template_sms('18511551140', ['123456', 5], 1)

@@ -1,31 +1,34 @@
-import logging
+#  创建一个存放业务逻辑包
 from logging.handlers import RotatingFileHandler
-
-
-
-import redis
+import logging
 from flask import Flask
-from flask_session import Session
+from config import config  # 将config字典导入
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import CSRFProtect
-from flask_wtf.csrf import generate_csrf
-from config import config
+from redis import StrictRedis
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_session import Session
 
-# 初始化数据库
-# 在flask中有很多扩展里面都可以先初始化扩展独享,然后再调用init_app方法去初始化
-# init__app是SQLAlchemy源码中初始化app的一个函数
+
+# config = {
+#     "develop": DevelopConfig,
+#     "product": ProductConfig,
+#     "testing": TestingConfig
+# }
+
+# db = SQLAlchemy(app) 拆分成2步
+# db = SQLAlchemy()
+# db.init_app(app)
+from info.utils.common import do_index_class
+
 db = SQLAlchemy()
 
 
-def setup_log(config_name):
-    """
-    基本上每个项目都会有这个模块,代码不用死记,什么时候用什么时候百度就行
-    :return: 
-    """
+def set_log(config_name):
+    # 通过不同的人配置创建出不同日志记录
     # 设置日志的记录等级
-    logging.basicConfig(level=config[config_name].LOG_EVEL)  # 调试debug级
+    logging.basicConfig(level=config[config_name].LOG_LEVEL) # 调试debug级
     # 创建日志记录器，指明日志保存的路径、每个日志文件的最大大小、保存的日志文件个数上限
-    file_log_handler = RotatingFileHandler("logs/log", maxBytes=1024, backupCount=10)
+    file_log_handler = RotatingFileHandler("logs/log", maxBytes=1024*1024*100, backupCount=10)
     # 创建日志记录的格式 日志等级 输入日志信息的文件名 行数 日志信息
     formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
     # 为刚创建的日志记录器设置日志记录格式
@@ -35,118 +38,49 @@ def setup_log(config_name):
 
 
 redis_store = None  # type: StrictRedis
-# redis_store: redis.StrictRedis = None  # 使用这种形式也可以
-"""
-1 使用修改全局变量的形式,使局部变量在全局可用
-2 注释声明变量的类型. 这样解释器就知道他是什么类型的对象,那就可以代码提示了
- # type: 
-"""
 
 
+# 只要是可变的参数，一、可以放在配置文件中，二、用函数封装 三、用全局变量
+# 可所有可变的参数用函数的形参来代替
 def create_app(config_name):
-    """
-    工厂模式创建app,不同参数产生不同配置的app
-    抽取app创建函数,因为不同环境,有不同的配置,所以通过传递参数,来确定配置 
-    
-    :param config_name: config字典中的键
-    :return: app实例对象
-    """
-
-    # setup_log(config_name)
-    """
-    创建 app 的时候,初始化 log 配置即可.
-    传入对应的环境,指定对应的日志等级,工厂模式
-    """
-
+    set_log(config_name)
     app = Flask(__name__)
-
-
-
-    # 从类中导入配置信息
+    # 一、集成配置类
     app.config.from_object(config[config_name])
 
-    # 在此处初始化app对象,很多第三方库都可以以这种方式初始化
+    # 二、集成sqlalchemy到flask
     db.init_app(app)
 
-    # 创建StrictRedis对象，与redis服务器建⽴连接
+    # 三、集成redis  可以吧容易产生变化的值放入到配置中
     global redis_store
-    redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT, decode_responses=True)
-    """
-    StrictRedis对象⽅法
-    指定参数host、port与指定的服务器和端⼝连接，
-    host默认为localhost，port默认为6379，db默认为0
+    redis_store = StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT, decode_responses=True)
+    # 四、CSRFProtect, 只起到保护的作用，具体往表单和cookie中设置csrf_token还需要我们自己去做
 
-    使用该对象可以对数据库进行一下相应的操作
-
-    ⽅法set，添加键、值，如果键不存在,就添加该键值,如果存在就把该键的值修改
-    如果添加成功则返回True，如果添加失败则返回False
-    result=sr.set('name','itheima')
-
-      使用get可以获取键name的值
-        result = sr.get('name')
-        输出键的值，如果键不存在则返回None
-
-        keys 输出响应结果，返回一个列表
-            result=sr.keys()
-    """
-
-    #  在界面加载的时候 往 cookie中添加一个csrf_token 并且在表点钟添加一个隐藏的csrf_token
-    # 使用请求钩子实现
+    # 1、先往cookie中添加一个csrf_token
+    # 2、往表单中去设置， 现在我们有表单吗？如何在ajax中去设置一个csrf_token
     @app.after_request
     def after_request(response):
-        """
-        集成csrf_token
-        """
-        # 生成随机的csrf值
+        # 通过wtf这个扩展给我们生成的token值
         csrf_token = generate_csrf()
-
-        # 设置一个cookie值
         response.set_cookie("csrf_token", csrf_token)
+
         return response
-
-    # 添加csrf配置信息
     CSRFProtect(app)
-    """
-    wtf 中的 csrf 验证就是由 csrfProtect 提供的.
-    所以只需要实例化 CSRFProtect 就可以开启 csrf验证.
-    补充: CSRFProtect 会对:
-    post,put,patch,delete. 这些操作进行校验
-    都是对服务器的数据有修改操作的. 而不是获取数据操
-    作.csrfProtect 只会对修改操作做校验.
-    """
 
-    # 配置Session
+    # 集成flask-session
+    # 说明: flask中的session是保存用户数据的容器（上下文），而flask_session中的Session是指定session的保存路径
     Session(app)
-    """
-    Session类中的init方法接收一个参数,就是app:
-        def __init__(self, app=None):
-            self.app = app
-            if app is not None:
-                self.init_app(app)
-    如果没有app就自己初始化一个,所以这里我们给他传一个app         
-    """
 
-    # 添加自定义过滤器函数
-    from info.utils.commom import to_index_class
-    app.add_template_filter(to_index_class,"index_class")
-
+    # 添加过滤器
+    app.add_template_filter(do_index_class, "index_class")
 
     # 注册蓝图
+    # 对于index_blu只导入一次，什么时候调用什么时候导入，解决循环导入问题的方法
     from info.modules.index import index_blu
     app.register_blueprint(index_blu)
-
-    # 注册passport蓝图
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
-
-    # 注册news蓝图
     from info.modules.news import news_blu
     app.register_blueprint(news_blu)
-
-    # 注册user蓝图
-    from info.modules.profile import profile_blu
-    app.register_blueprint(profile_blu)
-
-
 
     return app
