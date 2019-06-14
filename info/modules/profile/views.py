@@ -5,7 +5,19 @@ from info.utils.response_code import RET
 from . import profile_blu
 
 
-@profile_blu.route("/user_base_info",methods=["POST","GET"])
+@profile_blu.route("/user_pic_info")
+@user_login
+def user_pic_info():
+    """
+    用户头像设置
+    """
+    user = g.userdata = {
+        "user_info": user.to_dict()
+    }
+    return render_template("news/user_pic_info.html", data=data)
+
+
+@profile_blu.route("/user_base_info", methods=["POST", "GET"])
 @user_login
 def user_base_info():
     """
@@ -24,11 +36,10 @@ def user_base_info():
     signature = request.json.get("signature")
     gender = request.json.get("gender")
 
-    if not all([nick_name,signature,gender]):
-        return jsonify(errno = RET.DBERR,errmsg="参数不全")
-    if gender not in ("woman","man"):
-        return  jsonify(errno=RET.PARAMERR, errmsg="参数错误")
-
+    if not all([nick_name, signature, gender]):
+        return jsonify(errno=RET.DBERR, errmsg="参数不全")
+    if gender not in ("woman", "man"):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
     user = g.user
     user.signature = signature
@@ -54,5 +65,3 @@ def user_info():
     }
 
     return render_template("news/user.html", data=data)
-
-
