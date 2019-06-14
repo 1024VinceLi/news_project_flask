@@ -106,65 +106,6 @@ def news_comment():
     return jsonify(errno=RET.OK, errmsg="ok", data=comment.to_dict(), comment_count=comment_count)
 
 
-@news_blu.route("/news_comment", methods=["POST"])
-@user_login
-def news_comment():
-    """
-    新闻评论功能
-    1、接收参数 用户  新闻  评论内容  parant_id
-    2、校验参数
-    3、业务逻辑  往数据库中添加一条评论
-    4、返回响应 返回响应的评论
-    :return:
-    """
-    user = g.user
-    if not user:
-        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
-
-    news_id = request.json.get("news_id")
-    comment_str = request.json.get("comment")
-    parent_id = request.json.get("parent_id")
-
-    if not all([news_id, comment_str]):
-        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
-
-    try:
-        news_id = int(news_id)
-        if parent_id:
-            parent_id = int(parent_id)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR, errmsg="参数类型错误")
-
-    try:
-        news = News.query.get(news_id)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="数据库查询错误")
-
-    if not news:
-        return jsonify(errno=RET.NODATA, errmsg="该条新闻不存在")
-
-    # 添加新闻评论，往评论表中添加数据
-    comment = Comment()
-    comment.news_id = news_id
-    comment.user_id = user.id
-    comment.content = comment_str
-    if parent_id:
-        comment.parent_id = parent_id
-
-    try:
-        db.session.add(comment)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="数据库保存失败")
-
-    # 查询出该条新闻下的评论条数
-    comment_count = Comment.query.filter(Comment.news_id == news_id).count()
-
-    return jsonify(errno=RET.OK, errmsg="ok", data=comment.to_dict(), comment_count=comment_count)
 
 
 @news_blu.route("/news_collect", methods=["POST"])
