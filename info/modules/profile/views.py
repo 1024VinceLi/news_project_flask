@@ -46,7 +46,14 @@ def user_base_info():
     user.nick_name = nick_name
     user.gender = gender
 
-    return jsonify(errno=RET.OK, errmsg="OK")
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
+
+    return jsonify(errno=RET.OK, errmsg="OK", data=user.to_dict())
 
 
 @profile_blu.route("/info")
